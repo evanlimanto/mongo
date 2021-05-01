@@ -208,6 +208,20 @@ Status validateKeyPattern(const BSONObj& key, IndexDescriptor::IndexVersion inde
     return Status::OK();
 }
 
+/**
+ * Parse an object of the following format:
+ * {
+ *     key: {
+ *         <key-value_pair>,
+ *         <key-value_pair>,
+ *         ...
+ *     },
+ *     name: <index_name>,
+ *     <option1>,
+ *     <option2>,
+ *     ...
+ * },
+ */
 StatusWith<BSONObj> validateIndexSpec(
     const BSONObj& indexSpec,
     const NamespaceString& expectedNamespace,

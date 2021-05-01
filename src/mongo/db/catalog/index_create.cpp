@@ -124,9 +124,10 @@ private:
     MultiIndexBlock* const _indexer;
 };
 
-MultiIndexBlock::MultiIndexBlock(OperationContext* txn, Collection* collection)
+MultiIndexBlock::MultiIndexBlock(OperationContext* txn, Collection* collection, bool skipCollectionScanForAbsentFields)
     : _collection(collection),
       _txn(txn),
+      _skipCollectionScanForAbsentFields(skipCollectionScanForAbsentFields),
       _buildInBackground(false),
       _allowInterruption(false),
       _ignoreUnique(false),
@@ -292,6 +293,20 @@ Status MultiIndexBlock::insertAllDocumentsInCollection(std::set<RecordId>* dupsO
     Timer t;
 
     unsigned long long n = 0;
+
+    // If we're only indexing new fields (as specified by the user), no need to scan any object in the
+    // collection.
+    if (_skipCollectionScanForAbsentFields) {
+        progress->finished();
+
+        Status ret = doneInserting(dupsOut);
+        if (!ret.isOK())
+            return ret;
+
+        log() << "skipped collection scan for index build.";
+
+        return Status::OK();
+    }
 
     unique_ptr<PlanExecutor> exec(InternalPlanner::collectionScan(
         _txn, _collection->ns().ns(), _collection, PlanExecutor::YIELD_MANUAL));

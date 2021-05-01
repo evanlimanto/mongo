@@ -65,7 +65,7 @@ public:
     /**
      * Neither pointer is owned.
      */
-    MultiIndexBlock(OperationContext* txn, Collection* collection);
+    MultiIndexBlock(OperationContext* txn, Collection* collection, bool skipCollectionScanForAbsentFields = false);
     ~MultiIndexBlock();
 
     /**
@@ -208,6 +208,7 @@ private:
     Collection* _collection;
     OperationContext* _txn;
 
+    const bool _skipCollectionScanForAbsentFields;
     bool _buildInBackground;
     bool _allowInterruption;
     bool _ignoreUnique;
