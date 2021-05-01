@@ -95,6 +95,7 @@ static const std::set<StringData> allowedIdIndexFieldNames = {
     IndexDescriptor::kIndexVersionFieldName,
     IndexDescriptor::kKeyPatternFieldName,
     IndexDescriptor::kNamespaceFieldName,
+    IndexDescriptor::kSkipCollectionScanForAbsentFields,
     // Index creation under legacy writeMode can result in an index spec with an _id field.
     "_id"};
 }
@@ -347,6 +348,13 @@ StatusWith<BSONObj> validateIndexSpec(
             }
 
             hasCollationField = true;
+        } else if (IndexDescriptor::kSkipCollectionScanForAbsentFields == indexSpecElemFieldName) {
+            if (!indexSpecElem.isBoolean()) {
+                return {ErrorCodes::TypeMismatch,
+                        str::stream() << "The field '" << IndexDescriptor::kSkipCollectionScanForAbsentFields
+                                      << "' must be a boolean, but got "
+                                      << typeName(indexSpecElemFieldName.type())};
+            }
         } else {
             // We can assume field name is valid at this point. Validation of fieldname is handled
             // prior to this in validateIndexSpecFieldNames().

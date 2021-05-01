@@ -352,6 +352,7 @@ IndexCatalog::IndexBuildBlock::IndexBuildBlock(OperationContext* txn,
     : _collection(collection),
       _catalog(collection->getIndexCatalog()),
       _ns(_catalog->_collection->ns().ns()),
+      _skipCollectionScanForAbsentFields(spec.getObjectField(IndexDescriptor::kSkipCollectionScanForAbsentFields).booleanSafe()),
       _spec(spec.getOwned()),
       _entry(NULL),
       _txn(txn) {

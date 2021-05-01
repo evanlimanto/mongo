@@ -124,10 +124,9 @@ private:
     MultiIndexBlock* const _indexer;
 };
 
-MultiIndexBlock::MultiIndexBlock(OperationContext* txn, Collection* collection, bool skipCollectionScanForAbsentFields)
+MultiIndexBlock::MultiIndexBlock(OperationContext* txn, Collection* collection)
     : _collection(collection),
       _txn(txn),
-      _skipCollectionScanForAbsentFields(skipCollectionScanForAbsentFields),
       _buildInBackground(false),
       _allowInterruption(false),
       _ignoreUnique(false),
@@ -290,23 +289,27 @@ Status MultiIndexBlock::insertAllDocumentsInCollection(std::set<RecordId>* dupsO
     ProgressMeterHolder progress(*_txn->setMessage_inlock(curopMessage, curopMessage, numRecords));
     lk.unlock();
 
-    Timer t;
-
-    unsigned long long n = 0;
-
-    // If we're only indexing new fields (as specified by the user), no need to scan any object in the
-    // collection.
-    if (_skipCollectionScanForAbsentFields) {
+    // Check whether all indexes are created for absent fields, as specified by the user. If
+    // so, skip index scanning entirely.
+    bool skipCollectionScanForAbsentFields = true;
+    for (size_t i = 0; i < _indexes.size(); i++) {
+        skipCollectionScanForAbsentFields =
+            skipCollectionScanForAbsentFields && _indexes[i].skipCollectionScanForAbsentFields);
+    }
+    if (skipCollectionScanForAbsentFields) {
         progress->finished();
 
         Status ret = doneInserting(dupsOut);
         if (!ret.isOK())
             return ret;
 
-        log() << "skipped collection scan for index build.";
+        log() << "skipping collection scan for index build.";
 
         return Status::OK();
     }
+
+    Timer t;
+    unsigned long long n = 0;
 
     unique_ptr<PlanExecutor> exec(InternalPlanner::collectionScan(
         _txn, _collection->ns().ns(), _collection, PlanExecutor::YIELD_MANUAL));
@@ -418,6 +421,9 @@ Status MultiIndexBlock::insert(const BSONObj& doc, const RecordId& loc) {
     for (size_t i = 0; i < _indexes.size(); i++) {
         if (_indexes[i].filterExpression && !_indexes[i].filterExpression->matchesBSON(doc)) {
             continue;
+        }
+        if (_indexes[i].skipCollectionScanForAbsentFields) {
+            continue
         }
 
         int64_t unused;

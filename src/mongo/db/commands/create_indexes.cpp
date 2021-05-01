@@ -67,7 +67,6 @@ const StringData kIndexesFieldName = "indexes"_sd;
 const StringData kCommandName = "createIndexes"_sd;
 const StringData kWriteConcern = "writeConcern"_sd;
 const StringData kMaxTimeMS = "maxTimeMS"_sd;
-const StringData kSkipCollectionScanForAbsentFields = "skipCollectionScanForAbsentFields"_sd;
 
 /**
  * Parses the index specifications from 'cmdObj', validates them, and returns equivalent index
@@ -127,13 +126,6 @@ StatusWith<std::vector<BSONObj>> parseAndValidateIndexSpecs(
         } else if (kCommandName == cmdElemFieldName || kWriteConcern == cmdElemFieldName ||
                    kMaxTimeMS == cmdElemFieldName) {
             continue;
-        } else if (kSkipCollectionScanForAbsentFields == cmdElemFieldName) {
-            if (!cmdElem.isBoolean()) {
-                return {ErrorCodes::TypeMismatch,
-                        str::stream() << "The field '" << kSkipCollectionScanForAbsentFields
-                                      << "' must be a boolean, but got "
-                                      << typeName(cmdElem.type())};
-            }
         } else {
             return {ErrorCodes::BadValue,
                     str::stream() << "Invalid field specified for " << kCommandName << " command: "
