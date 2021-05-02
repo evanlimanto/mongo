@@ -15,8 +15,9 @@ RUN yum install -y \
 
 RUN yum install -y boost-devel
 
+RUN cd mongo \
+  && git fetch origin el-build-local \
+  && git reset --hard origin/el-build-local
 RUN --mount=type=cache,target=/tmp/scons/cache \
   cd mongo \
-  && git fetch origin el-build-local \
-  && git reset --hard origin/el-build-local \
   && SCONSFLAGS="-j 9" scons --disable-warnings-as-errors --cache-dir="/tmp/scons/cache" --cache

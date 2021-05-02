@@ -353,7 +353,7 @@ StatusWith<BSONObj> validateIndexSpec(
                 return {ErrorCodes::TypeMismatch,
                         str::stream() << "The field '" << IndexDescriptor::kSkipCollectionScanForAbsentFields
                                       << "' must be a boolean, but got "
-                                      << typeName(indexSpecElemFieldName.type())};
+                                      << typeName(indexSpecElem.type())};
             }
         } else {
             // We can assume field name is valid at this point. Validation of fieldname is handled
