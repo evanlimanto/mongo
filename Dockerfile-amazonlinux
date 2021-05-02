@@ -1,0 +1,24 @@
+FROM amazonlinux:latest
+
+RUN yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+RUN yum update -y; yum clean all
+RUN yum install -y git
+
+RUN git clone https://github.com/evanlimanto/mongo
+
+RUN yum install -y \
+  python2 \
+  python2-scons \
+  gcc \
+  gcc-c++ \
+  make
+
+RUN yum install -y boost-devel
+
+RUN cd mongo \
+  && git fetch origin el-build-local \
+  && git reset --hard c11f6d7bbd537914530da1c484d8c897704c3784
+
+RUN --mount=type=cache,target=/tmp/scons/cache \
+  cd mongo \
+  && SCONSFLAGS="-j 9" scons all --disable-warnings-as-errors --cache-dir="/tmp/scons/cache" --cache

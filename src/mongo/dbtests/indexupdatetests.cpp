@@ -689,6 +689,27 @@ public:
     }
 };
 
+class SkipCollectionScanForAbsentFieldsSuccess {
+public:
+    void run() {
+        auto opCtx = cc().makeOperationContext();
+        DBDirectClient client(opCtx.get());
+        client.dropCollection(_ns);
+        IndexSpec indexSpec;
+        indexSpec.addKey("a").addOptions(BSON("skipCollectionScanForAbsentFields" << true));
+        client.insert(_ns, BSON("a" << BSONSymbol("mySymbol")));
+        client.createIndex(_ns, indexSpec);
+        ASSERT(client.getLastError().empty());
+
+        // The index should be empty because we skipped the collection scan on build.
+        ASSERT_EQUALS(client.count(_ns), 0U);
+
+        // Inserts after creation should update the index count.
+        client.insert(_ns, BSON("a" << BSONSymbol("myOtherSymbol")));
+        ASSERT_EQUALS(client.count(_ns), 1U);
+    }
+};
+
 class InsertSymbolIntoIndexWithCollationFails {
 public:
     void run() {
@@ -820,6 +841,7 @@ public:
 
         add<IndexCatatalogFixIndexKey>();
 
+        add<SkipCollectionScanForAbsentFieldsSuccess>();
         add<InsertSymbolInsideNestedObjectIntoIndexWithCollationFails>();
         add<InsertSymbolIntoIndexWithoutCollationSucceeds>();
         add<InsertSymbolInsideNestedObjectIntoIndexWithCollationFails>();

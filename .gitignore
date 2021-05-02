@@ -154,6 +154,9 @@ CMakeLists.txt
 # XCode projects
 .xcworkspace
 
+# VScode projects
+.vscode
+
 # old things that should be removed
 # maybe remove this mid 2012
 src/mongo/buildinfo.cpp

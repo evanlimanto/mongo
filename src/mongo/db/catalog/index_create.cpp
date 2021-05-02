@@ -44,6 +44,7 @@
 #include "mongo/db/concurrency/write_conflict_exception.h"
 #include "mongo/db/curop.h"
 #include "mongo/db/exec/working_set_common.h"
+#include "mongo/db/index/index_descriptor.h"
 #include "mongo/db/operation_context.h"
 #include "mongo/db/query/internal_plans.h"
 #include "mongo/db/repl/replication_coordinator_global.h"
@@ -257,6 +258,7 @@ StatusWith<std::vector<BSONObj>> MultiIndexBlock::init(const std::vector<BSONObj
                   << eachIndexBuildMaxMemoryUsageBytes / 1024 / 1024 << " megabytes of RAM";
 
         index.filterExpression = index.block->getEntry()->getFilterExpression();
+        index.skipCollectionScanForAbsentFields = info.getBoolField(IndexDescriptor::kSkipCollectionScanForAbsentFields);
 
         // TODO SERVER-14888 Suppress this in cases we don't want to audit.
         audit::logCreateIndex(_txn->getClient(), &info, descriptor->indexName(), ns);
@@ -289,8 +291,26 @@ Status MultiIndexBlock::insertAllDocumentsInCollection(std::set<RecordId>* dupsO
     ProgressMeterHolder progress(*_txn->setMessage_inlock(curopMessage, curopMessage, numRecords));
     lk.unlock();
 
-    Timer t;
+    // Check whether all indexes are created for absent fields, as specified by the user. If
+    // so, skip index scanning entirely.
+    bool skipCollectionScanForAbsentFields = true;
+    for (size_t i = 0; i < _indexes.size(); i++) {
+        skipCollectionScanForAbsentFields =
+            skipCollectionScanForAbsentFields && _indexes[i].skipCollectionScanForAbsentFields;
+    }
+    if (skipCollectionScanForAbsentFields) {
+        progress->finished();
 
+        Status ret = doneInserting(dupsOut);
+        if (!ret.isOK())
+            return ret;
+
+        log() << "skipping collection scan for index build.";
+
+        return Status::OK();
+    }
+
+    Timer t;
     unsigned long long n = 0;
 
     unique_ptr<PlanExecutor> exec(InternalPlanner::collectionScan(
@@ -402,6 +422,9 @@ Status MultiIndexBlock::insertAllDocumentsInCollection(std::set<RecordId>* dupsO
 Status MultiIndexBlock::insert(const BSONObj& doc, const RecordId& loc) {
     for (size_t i = 0; i < _indexes.size(); i++) {
         if (_indexes[i].filterExpression && !_indexes[i].filterExpression->matchesBSON(doc)) {
+            continue;
+        }
+        if (_indexes[i].skipCollectionScanForAbsentFields) {
             continue;
         }
 

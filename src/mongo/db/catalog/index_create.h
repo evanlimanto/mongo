@@ -38,6 +38,7 @@
 #include "mongo/base/disallow_copying.h"
 #include "mongo/base/status.h"
 #include "mongo/db/index/index_access_method.h"
+#include "mongo/db/index/index_descriptor.h"
 #include "mongo/db/record_id.h"
 
 namespace mongo {
@@ -45,6 +46,7 @@ namespace mongo {
 class BackgroundOperation;
 class BSONObj;
 class Collection;
+class IndexDescriptor;
 class OperationContext;
 
 /**
@@ -198,6 +200,7 @@ private:
         std::unique_ptr<IndexAccessMethod::BulkBuilder> bulk;
 
         InsertDeleteOptions options;
+        bool skipCollectionScanForAbsentFields;
     };
 
     std::vector<IndexToBuild> _indexes;

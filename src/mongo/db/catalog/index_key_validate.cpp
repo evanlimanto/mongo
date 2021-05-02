@@ -81,6 +81,7 @@ static const std::set<StringData> allowedFieldNames = {
     IndexDescriptor::kLanguageOverrideFieldName,
     IndexDescriptor::kNamespaceFieldName,
     IndexDescriptor::kPartialFilterExprFieldName,
+    IndexDescriptor::kSkipCollectionScanForAbsentFields,
     IndexDescriptor::kSparseFieldName,
     IndexDescriptor::kStorageEngineFieldName,
     IndexDescriptor::kTextVersionFieldName,
@@ -95,6 +96,7 @@ static const std::set<StringData> allowedIdIndexFieldNames = {
     IndexDescriptor::kIndexVersionFieldName,
     IndexDescriptor::kKeyPatternFieldName,
     IndexDescriptor::kNamespaceFieldName,
+    IndexDescriptor::kSkipCollectionScanForAbsentFields,
     // Index creation under legacy writeMode can result in an index spec with an _id field.
     "_id"};
 }
@@ -208,6 +210,23 @@ Status validateKeyPattern(const BSONObj& key, IndexDescriptor::IndexVersion inde
     return Status::OK();
 }
 
+/**
+ * Validate an index object of the following format:
+ * {
+ *     key: {
+ *         <key-value_pair>,
+ *         <key-value_pair>,
+ *         ...
+ *     },
+ *     name: <index_name>,
+ *     <option1>,
+ *     <option2>,
+ *     ...
+ * },
+ *
+ * See https://docs.mongodb.com/v3.4/reference/command/createIndexes/#dbcmd.createIndexes for
+ * a reference.
+ */
 StatusWith<BSONObj> validateIndexSpec(
     const BSONObj& indexSpec,
     const NamespaceString& expectedNamespace,
@@ -333,6 +352,13 @@ StatusWith<BSONObj> validateIndexSpec(
             }
 
             hasCollationField = true;
+        } else if (IndexDescriptor::kSkipCollectionScanForAbsentFields == indexSpecElemFieldName) {
+            if (!indexSpecElem.isBoolean()) {
+                return {ErrorCodes::TypeMismatch,
+                        str::stream() << "The field '" << IndexDescriptor::kSkipCollectionScanForAbsentFields
+                                      << "' must be a boolean, but got "
+                                      << typeName(indexSpecElem.type())};
+            }
         } else {
             // We can assume field name is valid at this point. Validation of fieldname is handled
             // prior to this in validateIndexSpecFieldNames().
