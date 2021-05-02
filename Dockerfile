@@ -16,8 +16,10 @@ RUN apt-get install -y \
   libboost-thread-dev \
   libboost-iostreams-dev
 
-RUN g++ --version
 RUN cd mongo \
   && git fetch origin el-build-local \
-  && git reset --hard origin/el-build-local \
-  && SCONSFLAGS="-j 9" scons --use-system-boost --disable-warnings-as-errors
+  && git reset --hard f1d4faf07fad08348485d725efb8fbb36c538006
+
+RUN --mount=type=cache,target=/tmp/scons/cache \
+  cd mongo \
+  && SCONSFLAGS="-j 9" scons --use-system-boost --disable-warnings-as-errors --cache-dir="/tmp/scons/cache" --cache

@@ -211,7 +211,7 @@ Status validateKeyPattern(const BSONObj& key, IndexDescriptor::IndexVersion inde
 }
 
 /**
- * Parse an object of the following format:
+ * Validate an index object of the following format:
  * {
  *     key: {
  *         <key-value_pair>,
@@ -223,6 +223,9 @@ Status validateKeyPattern(const BSONObj& key, IndexDescriptor::IndexVersion inde
  *     <option2>,
  *     ...
  * },
+ *
+ * See https://docs.mongodb.com/v3.4/reference/command/createIndexes/#dbcmd.createIndexes for
+ * a reference.
  */
 StatusWith<BSONObj> validateIndexSpec(
     const BSONObj& indexSpec,
