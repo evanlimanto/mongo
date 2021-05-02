@@ -295,7 +295,7 @@ Status MultiIndexBlock::insertAllDocumentsInCollection(std::set<RecordId>* dupsO
     bool skipCollectionScanForAbsentFields = true;
     for (size_t i = 0; i < _indexes.size(); i++) {
         skipCollectionScanForAbsentFields =
-            skipCollectionScanForAbsentFields && _indexes[i].skipCollectionScanForAbsentFields);
+            skipCollectionScanForAbsentFields && _indexes[i].skipCollectionScanForAbsentFields;
     }
     if (skipCollectionScanForAbsentFields) {
         progress->finished();
@@ -424,7 +424,7 @@ Status MultiIndexBlock::insert(const BSONObj& doc, const RecordId& loc) {
             continue;
         }
         if (_indexes[i].skipCollectionScanForAbsentFields) {
-            continue
+            continue;
         }
 
         int64_t unused;
