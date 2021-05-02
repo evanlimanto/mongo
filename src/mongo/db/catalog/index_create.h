@@ -45,6 +45,7 @@ namespace mongo {
 class BackgroundOperation;
 class BSONObj;
 class Collection;
+class IndexDescriptor;
 class OperationContext;
 
 /**
