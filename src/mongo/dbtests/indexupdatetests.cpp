@@ -841,6 +841,7 @@ public:
 
         add<IndexCatatalogFixIndexKey>();
 
+        add<SkipCollectionScanForAbsentFieldsSuccess>();
         add<InsertSymbolInsideNestedObjectIntoIndexWithCollationFails>();
         add<InsertSymbolIntoIndexWithoutCollationSucceeds>();
         add<InsertSymbolInsideNestedObjectIntoIndexWithCollationFails>();
