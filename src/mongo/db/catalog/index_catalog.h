@@ -291,7 +291,6 @@ public:
         Collection* const _collection;
         IndexCatalog* const _catalog;
         const std::string _ns;
-        const bool _skipCollectionScanForAbsentFields;
 
         BSONObj _spec;
 

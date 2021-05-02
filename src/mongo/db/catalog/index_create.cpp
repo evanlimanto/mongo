@@ -257,6 +257,7 @@ StatusWith<std::vector<BSONObj>> MultiIndexBlock::init(const std::vector<BSONObj
                   << eachIndexBuildMaxMemoryUsageBytes / 1024 / 1024 << " megabytes of RAM";
 
         index.filterExpression = index.block->getEntry()->getFilterExpression();
+        index.skipCollectionScanForAbsentFields = info.getObjectField(IndexDescriptor::kSkipCollectionScanForAbsentFields).booleanSafe());
 
         // TODO SERVER-14888 Suppress this in cases we don't want to audit.
         audit::logCreateIndex(_txn->getClient(), &info, descriptor->indexName(), ns);

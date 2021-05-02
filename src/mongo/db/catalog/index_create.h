@@ -196,6 +196,7 @@ private:
         IndexAccessMethod* real = NULL;           // owned elsewhere
         const MatchExpression* filterExpression;  // might be NULL, owned elsewhere
         std::unique_ptr<IndexAccessMethod::BulkBuilder> bulk;
+        const bool skipCollectionScanForAbsentFields;
 
         InsertDeleteOptions options;
     };
